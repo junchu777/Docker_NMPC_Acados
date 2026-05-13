@@ -9,8 +9,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ENV DRIVERLESS_ROOT=/workspaces/driverless
 ENV DRIVERLESS_WS=${DRIVERLESS_ROOT}/driverless_ws
-ENV BAGS_PATH=${DRIVERLESS_ROOT}/bags
-ENV MAPS_PATH=${DRIVERLESS_ROOT}/maps
+ENV BAGS_PATH=/data/bags
+ENV MAPS_PATH=/data/maps
 
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV ROS_DOMAIN_ID=19
