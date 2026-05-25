@@ -96,6 +96,9 @@ RUN chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.bashrc
 # General Dependencies
 #-------------------------------------------------
 
+COPY dependencies/debs /tmp/debs
+RUN dpkg -i /tmp/debs/*.deb && rm -rf /tmp/debs
+
 # osqp
 COPY dependencies/osqp /tmp/osqp
 RUN cmake -S /tmp/osqp -B /tmp/osqp/build -DCMAKE_BUILD_TYPE=Release && \
