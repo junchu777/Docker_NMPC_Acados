@@ -14,6 +14,10 @@ ENV ROS_DOMAIN_ID=19
 ENV RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity}]: {message}"
 ENV RCUTILS_COLORIZED_OUTPUT=1
 ENV CYCLONEDDS_URI=file://${DRIVERLESS_ROOT}/cyclonedds.xml
+ENV ACADOS_SOURCE_DIR=/opt/acados
+ENV ACADOS_SOLVER_DIR=${DRIVERLESS_WS}/src/control/controller/src/lateral_control/generated/acados
+ENV ACADOS_PYTHON_ENV=/opt/acados-venv
+ENV LD_LIBRARY_PATH=${ACADOS_SOURCE_DIR}/lib:${ACADOS_SOLVER_DIR}:/usr/local/lib
 
 #-------------------------------------------------
 # Base Runtime Setup
@@ -40,6 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-numpy \
     python3-pip \
     python3-sklearn \
+    python3-venv \
     ros-dev-tools \
     ros-jazzy-domain-bridge \
     ros-jazzy-foxglove-bridge \
@@ -90,6 +95,24 @@ RUN cmake -S /tmp/qpmad -B /tmp/qpmad/build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build /tmp/qpmad/build -j"$(nproc)" && \
     cmake --install /tmp/qpmad/build && \
     rm -rf /tmp/qpmad
+
+# acados
+COPY dependencies/acados ${ACADOS_SOURCE_DIR}
+RUN cmake -S ${ACADOS_SOURCE_DIR} -B ${ACADOS_SOURCE_DIR}/build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DACADOS_INSTALL_DIR=${ACADOS_SOURCE_DIR} \
+        -DACADOS_WITH_QPOASES=ON \
+        -DACADOS_WITH_OSQP=OFF && \
+    cmake --build ${ACADOS_SOURCE_DIR}/build -j"$(nproc)" && \
+    cmake --install ${ACADOS_SOURCE_DIR}/build && \
+    rm -rf ${ACADOS_SOURCE_DIR}/build
+
+# acados Python interface
+RUN python3 -m venv ${ACADOS_PYTHON_ENV} && \
+    ${ACADOS_PYTHON_ENV}/bin/pip install --upgrade pip setuptools wheel && \
+    ${ACADOS_PYTHON_ENV}/bin/pip install casadi && \
+    ${ACADOS_PYTHON_ENV}/bin/pip install -e ${ACADOS_SOURCE_DIR}/interfaces/acados_template && \
+    ${ACADOS_PYTHON_ENV}/bin/python -c "from acados_template.utils import get_tera; get_tera(force_download=True)"
 
 #-------------------------------------------------
 # GraphSLAM Dependencies
